@@ -74,10 +74,10 @@ temp = list.files(pattern="*.csv")
 encori_data = lapply(temp, read.csv, header=TRUE, sep="\t", skip = 2, comment.char = "#")
 setwd("~/Google_Drive/research/sirna_rbp/data/")
 # get sequences that correspond to chromosome coordinates ##########
+# places all info into encori_data, which is a list of dataframes for each gene
 web2<-'http://genome.ucsc.edu/cgi-bin/das/hg18/dna?segment='
-
-# for(d in encori_data){
-  # df <- data.frame(d)
+for(d in encori_data){
+  df <- data.frame(d)
   for(r in 1:nrow(df)){
     chr<- df$chromosome[r]
     start<- df$broadStart[r]
@@ -90,15 +90,54 @@ web2<-'http://genome.ucsc.edu/cgi-bin/das/hg18/dna?segment='
     # add sequence to dataframe
     df$rbp_target_sequence[r] = seq
   }
-# }
+}
 
-# get mRNA sequences (ALL isoforms) for each gene
+# get mRNA sequences (ALL isoforms) for each gene #######
 setwd("~/Desktop/sirna_pred/LocalSequencePredictions/data/")
-# test with ACAD8
+
 # get accession numbers rna.gbk_gene2acc.txt
 
-
+accessions <- c()
+for(g in all_genes){
+  l <- grep(paste('^',g,'\t',sep=""),readLines("rna.gbk_gene2acc.txt"))
+  accessions<- c(accessions, lapply(readLines("rna.gbk_gene2acc.txt")[l],gsub,pattern=paste(g,"\t",sep=""),replacement=""))
+}
 # get mRNA sequences formatted_rna.fa.concatenated_new.txt
+## TODO: change so actually gets all accessions (not just first 3)
+acc2 <- as.character(accessions[1:3])
+mrna_sequences <- c()
+gene_names <- c()
+for(a in acc2){
+  l <- grep(paste('^',a,'\t',sep=""),readLines("formatted_rna.fa.concatenated_new.txt"))
+  seq<-readLines("formatted_rna.fa.concatenated_new.txt")[l]
+  pos_seq_start<-sapply(str_locate_all(seq, '\t'), tail, 1)[1]
+  pos_gene_start<-sapply(str_locate_all(seq, '\t'), head, 1)[1]
+  sq <- gsub("[\t]", "",substr(seq, pos_seq_start,nchar(seq)))
+  gene <-gsub("[\t]", "",substr(seq, pos_gene_start, pos_seq_start))
+  mrna_sequences <- c(mrna_sequences, seq)
+  gene_names <- c(gene_names, gene)
+}
+# acc2 <- as.list(acc2)
+# mrna_sequences <- as.list(mrna_sequences)
+mrna_dat<-do.call(rbind, Map(data.frame, gene = gene_names, accessions=acc2, seq=mrna_sequences,  stringsAsFactors = FALSE))
+View(mrna_dat)
 # TODO: only look at regions in 3' UTR (need rna.gbk.cds.txt)
+
+# for each gene, compare rbp targeting sequence with the mRNA sequenence ###########
+comp <- mrna_dat[1,]
+
+
+# get appropriate encori data for the gene name
+#    encori data has all genes listed alphabetically
+all_genes<-sort(all_genes) # sort all genes
+# check that length of all_genes matches encori data length (so not missing any data)
+length(all_genes) == length(encori_data)
+# get index of gene in all_genes (will match that in encori)
+i <- match(comp$gene,all_genes)
+c_encori_df <- data.frame(encori_data[6])
+View(c_encori_df)
+cur_df$geneName[1] == comp$gene
+
+
 
 # compile into single file
