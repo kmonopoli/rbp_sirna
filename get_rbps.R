@@ -2,13 +2,14 @@ install.packages("readxl")
 install.packages("cowplot")
 install.packages("tidyverse")
 install.packages("RCurl")
+# install.packages("rlist")
 library("readxl")
 library(cowplot)
 library("ggplot2")
 library(tidyverse)
 library(gridExtra)
 library(RCurl)
-
+# library(rlist)
 
 # get list of siRNA human gene targets
 # from:
@@ -73,9 +74,10 @@ setwd("~/Google_Drive/research/sirna_rbp/data/encori_data/")
 temp = list.files(pattern="*.csv")
 encori_data = lapply(temp, read.csv, header=TRUE, sep="\t", skip = 2, comment.char = "#")
 setwd("~/Google_Drive/research/sirna_rbp/data/")
-# get sequences that correspond to chromosome coordinates ##########
+# get sequences that correspond to chromosome coordinates
 # places all info into encori_data, which is a list of dataframes for each gene
 web2<-'http://genome.ucsc.edu/cgi-bin/das/hg18/dna?segment='
+encori_data_seqs <- list()
 for(d in encori_data){
   df <- data.frame(d)
   for(r in 1:nrow(df)){
@@ -89,6 +91,7 @@ for(d in encori_data){
     seq <- gsub("[\n]", "",substr(out, f,l)) 
     # add sequence to dataframe
     df$rbp_target_sequence[r] = seq
+    encori_data_seqs[[as.character(d$geneName[1])]] <- df
   }
 }
 
@@ -134,9 +137,16 @@ all_genes<-sort(all_genes) # sort all genes
 length(all_genes) == length(encori_data)
 # get index of gene in all_genes (will match that in encori)
 i <- match(comp$gene,all_genes)
-c_encori_df <- data.frame(encori_data[6])
+# get dataframe from encori rbp data that matches the mRNA sequence being queried
+c_encori_df <- data.frame(encori_data[i])
+
 View(c_encori_df)
-cur_df$geneName[1] == comp$gene
+
+
+
+
+
+
 
 
 
