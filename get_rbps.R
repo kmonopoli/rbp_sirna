@@ -70,30 +70,36 @@ write.table(encori_cmds, file="fetch_encori.sh", append = FALSE, sep = " ", dec 
 # Read in encori RBP data ############
 # TODO: MANUALLY run the bash script (fetch_encori.sh) from the command line
 
-setwd("~/Google_Drive/research/sirna_rbp/data/encori_data/")
-temp = list.files(pattern="*.csv")
-encori_data = lapply(temp, read.csv, header=TRUE, sep="\t", skip = 2, comment.char = "#")
-setwd("~/Google_Drive/research/sirna_rbp/data/")
-# get sequences that correspond to chromosome coordinates
-# places all info into encori_data, which is a list of dataframes for each gene
-web2<-'http://genome.ucsc.edu/cgi-bin/das/hg18/dna?segment='
-encori_data_seqs <- list()
-for(d in encori_data){
-  df <- data.frame(d)
-  for(r in 1:nrow(df)){
-    chr<- df$chromosome[r]
-    start<- df$broadStart[r]
-    stop<-df$broadEnd[r]
-    out<-getURL(paste(web2,chr,":",start,",",stop, sep = ""))
-    # get sequence
-    f<- sapply(str_locate_all(out, '\">\n'), tail, 1)[2]
-    l<-sapply(str_locate_all(out, '\n</DNA>\n</SEQUENCE>\n</DASDNA>\n'),head,1)[1]
-    seq <- gsub("[\n]", "",substr(out, f,l)) 
-    # add sequence to dataframe
-    df$rbp_target_sequence[r] = seq
-    encori_data_seqs[[as.character(d$geneName[1])]] <- df
-  }
-}
+# setwd("~/Google_Drive/research/sirna_rbp/data/encori_data/")
+# temp = list.files(pattern="*.csv")
+# encori_data = lapply(temp, read.csv, header=TRUE, sep="\t", skip = 2, comment.char = "#")
+# setwd("~/Google_Drive/research/sirna_rbp/data/")
+# # get sequences that correspond to chromosome coordinates
+# # places all info into encori_data, which is a list of dataframes for each gene
+# web2<-'http://genome.ucsc.edu/cgi-bin/das/hg18/dna?segment='
+# encori_data_seqs <- list()
+# i=1
+# while(i<length(encori_data)){
+#   df <- data.frame(encori_data[i])
+# # for(d in encori_data){
+#   # df <- data.frame(d)
+#   if(((nrow(df)) != 0) & !(is.na(df$clusterNum[1]))) {
+#     for(r in 1:nrow(df)){
+#       chr<- df$chromosome[r]
+#       start<- df$broadStart[r]
+#       stop<-df$broadEnd[r]
+#       out<-getURL(paste(web2,chr,":",start,",",stop, sep = ""))
+#       # get sequence
+#       f<- sapply(str_locate_all(out, '\">\n'), tail, 1)[2]
+#       l<-sapply(str_locate_all(out, '\n</DNA>\n</SEQUENCE>\n</DASDNA>\n'),head,1)[1]
+#       seq <- gsub("[\n]", "",substr(out, f,l)) 
+#       # add sequence to dataframe
+#       df$rbp_target_sequence[r] = seq
+#       encori_data_seqs[[as.character(df$geneName[1])]] <- df
+#     }
+#   }
+#   i=i+1
+# }
 
 # get mRNA sequences (ALL isoforms) for each gene #######
 setwd("~/Desktop/sirna_pred/LocalSequencePredictions/data/")
@@ -107,7 +113,7 @@ for(g in all_genes){
 }
 # get mRNA sequences formatted_rna.fa.concatenated_new.txt
 ## TODO: change so actually gets all accessions (not just first 3)
-acc2 <- as.character(accessions[1:3])
+acc2 <- as.character(accessions)
 mrna_sequences <- c()
 gene_names <- c()
 for(a in acc2){
